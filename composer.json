@@ -1,0 +1,24 @@
+{
+    "name":        "bmatzner/jquery-bundle",
+    "type":        "symfony-bundle",
+    "description": "jQuery Bundle for Symfony2",
+    "keywords":    ["jquery", "javascript", "symfony"],
+    "homepage":    "http://jquery.com/",
+    "license":     ["MIT", "GPLv2"],
+    "authors":     [
+        {
+            "name":     "Bernd Matzner",
+            "email":    "bernd@matznermatzner.de",
+            "homepage": "http://berndmatzner.de"
+        }
+    ],
+    "require":     {
+        "symfony/framework-bundle": ">=2.1"
+    },
+    "autoload":    {
+        "psr-0": {
+            "Bmatzner\\JQueryBundle": ""
+        }
+    },
+    "target-dir":  "Bmatzner/JQueryBundle"
+}
