@@ -1,16 +1,10 @@
 /*!
- * jQuery Migrate - v1.0.0rc1 - 2013-01-08
+ * jQuery Migrate - v1.0.0 - 2013-01-14
  * https://github.com/jquery/jquery-migrate
- * Copyright 2013 jQuery Foundation and other contributors; Licensed MIT
+ * Copyright 2005, 2013 jQuery Foundation, Inc. and other contributors; Licensed MIT
  */
 (function( jQuery, window, undefined ) {
 "use strict";
-
-// Use Uglify to do conditional compilation of warning messages;
-// the minified version will set this to false and remove dead code.
-if ( typeof window.JQMIGRATE_WARN === "undefined" ) {
-	window.JQMIGRATE_WARN = true;
-}
 
 
 var warnedAbout = {};
@@ -19,8 +13,7 @@ var warnedAbout = {};
 jQuery.migrateWarnings = [];
 
 // Set to true to prevent console output; migrateWarnings still maintained
-// Leave as undefined so that it can be set before plugin is loaded
-//jQuery.migrateMute = false;
+// jQuery.migrateMute = false;
 
 // Forget any warnings we've already given; public
 jQuery.migrateReset = function() {
@@ -29,19 +22,17 @@ jQuery.migrateReset = function() {
 };
 
 function migrateWarn( msg) {
-	if ( window.JQMIGRATE_WARN ) {
-		if ( !warnedAbout[ msg ] ) {
-			warnedAbout[ msg ] = true;
-			jQuery.migrateWarnings.push( msg );
-			if ( window.console && console.warn && !jQuery.migrateMute ) {
-				console.warn( "JQMIGRATE: " + msg );
-			}
+	if ( !warnedAbout[ msg ] ) {
+		warnedAbout[ msg ] = true;
+		jQuery.migrateWarnings.push( msg );
+		if ( window.console && console.warn && !jQuery.migrateMute ) {
+			console.warn( "JQMIGRATE: " + msg );
 		}
 	}
 }
 
 function migrateWarnProp( obj, prop, value, msg ) {
-	if ( window.JQMIGRATE_WARN && Object.defineProperty ) {
+	if ( Object.defineProperty ) {
 		// On ES5 browsers (non-oldIE), warn if the code tries to get prop;
 		// allow property to be overwritten in case some other plugin wants it
 		try {
@@ -68,7 +59,7 @@ function migrateWarnProp( obj, prop, value, msg ) {
 	obj[ prop ] = value;
 }
 
-if ( window.JQMIGRATE_WARN && document.compatMode === "BackCompat" ) {
+if ( document.compatMode === "BackCompat" ) {
 	// jQuery has never supported or tested Quirks Mode
 	migrateWarn( "jQuery is not compatible with Quirks Mode" );
 }
@@ -176,7 +167,6 @@ jQuery.attrHooks.value = {
 
 
 var matched, browser,
-	oldAccess = jQuery.access,
 	oldInit = jQuery.fn.init,
 	// Note this does NOT include the # XSS fix from 1.7!
 	rquickExpr = /^(?:.*(<[\w\W]+>)[^>]*|#([\w\-]*))$/;
@@ -204,27 +194,6 @@ jQuery.fn.init = function( selector, context, rootjQuery ) {
 	return oldInit.apply( this, arguments );
 };
 jQuery.fn.init.prototype = jQuery.fn;
-
-if ( jQuery.fn.jquery >= "1.9" ) {
-	// jQuery.access( ..., pass )
-	jQuery.access = function( elems, fn, key, value, chainable, emptyGet, pass ) {
-		var i = 0,
-			length = elems.length;
-
-		if ( key && typeof key === "object" && value ) {
-			for ( i in key ) {
-				jQuery.access( elems, fn, i, key[i], true, emptyGet, value );
-			}
-			return elems;
-		} else if ( pass && key != null && value !== undefined ) {
-			for ( ; i < length; i++ ) {
-				fn( elems[i], key, value, true );
-			}
-			return elems;
-		}
-		return oldAccess.call( jQuery, elems, fn, key, value, chainable, emptyGet );
-	};
-}
 
 jQuery.uaMatch = function( ua ) {
 	ua = ua.toLowerCase();
@@ -304,7 +273,9 @@ jQuery.fn.data = function( name ) {
 };
 
 
-var oldSelf = jQuery.fn.andSelf || jQuery.fn.addBack;
+var rscriptType = /\/(java|ecma)script/i,
+	oldSelf = jQuery.fn.andSelf || jQuery.fn.addBack,
+	oldFragment = jQuery.buildFragment;
 
 jQuery.fn.andSelf = function() {
 	migrateWarn("jQuery.fn.andSelf() replaced by jQuery.fn.addBack()");
@@ -313,20 +284,82 @@ jQuery.fn.andSelf = function() {
 
 // Since jQuery.clean is used internally on older versions, we only shim if it's missing
 if ( !jQuery.clean ) {
-	jQuery.clean = function( elems, context, fragment, scripts, selection ) {
-		var newFragment = jQuery.buildFragment( elems, context || document, scripts, selection );
+	jQuery.clean = function( elems, context, fragment, scripts ) {
+		// Set context per 1.8 logic
+		context = context || document;
+		context = !context.nodeType && context[0] || context;
+		context = context.ownerDocument || context;
 
 		migrateWarn("jQuery.clean() is deprecated");
-		if ( fragment ) {
-			fragment.appendChild( newFragment );
 
-		} else {
-			fragment = newFragment;
+		var i, elem, handleScript, jsTags,
+			ret = [];
+
+		jQuery.merge( ret, jQuery.buildFragment( elems, context ).childNodes );
+
+		// Complex logic lifted directly from jQuery 1.8
+		if ( fragment ) {
+			// Special handling of each script element
+			handleScript = function( elem ) {
+				// Check if we consider it executable
+				if ( !elem.type || rscriptType.test( elem.type ) ) {
+					// Detach the script and store it in the scripts array (if provided) or the fragment
+					// Return truthy to indicate that it has been handled
+					return scripts ?
+						scripts.push( elem.parentNode ? elem.parentNode.removeChild( elem ) : elem ) :
+						fragment.appendChild( elem );
+				}
+			};
+
+			for ( i = 0; (elem = ret[i]) != null; i++ ) {
+				// Check if we're done after handling an executable script
+				if ( !( jQuery.nodeName( elem, "script" ) && handleScript( elem ) ) ) {
+					// Append to fragment and handle embedded scripts
+					fragment.appendChild( elem );
+					if ( typeof elem.getElementsByTagName !== "undefined" ) {
+						// handleScript alters the DOM, so use jQuery.merge to ensure snapshot iteration
+						jsTags = jQuery.grep( jQuery.merge( [], elem.getElementsByTagName("script") ), handleScript );
+
+						// Splice the scripts into ret after their former ancestor and advance our index beyond them
+						ret.splice.apply( ret, [i + 1, 0].concat( jsTags ) );
+						i += jsTags.length;
+					}
+				}
+			}
 		}
 
-		return jQuery.merge( [], fragment.childNodes );
+		return ret;
 	};
 }
+
+jQuery.buildFragment = function( elems, context, scripts, selection ) {
+	var ret,
+		warning = "jQuery.buildFragment() is deprecated";
+
+	// Set context per 1.8 logic
+	context = context || document;
+	context = !context.nodeType && context[0] || context;
+	context = context.ownerDocument || context;
+
+	try {
+		ret = oldFragment.call( jQuery, elems, context, scripts, selection );
+
+	// jQuery < 1.8 required arrayish context; jQuery 1.9 fails on it
+	} catch( x ) {
+		ret = oldFragment.call( jQuery, elems, context.nodeType ? [ context ] : context[ 0 ], scripts, selection );
+
+		// Success from tweaking context means buildFragment was called by the user
+		migrateWarn( warning );
+	}
+
+	// jQuery < 1.9 returned an object instead of the fragment itself
+	if ( !ret.fragment ) {
+		migrateWarnProp( ret, "fragment", ret, warning );
+		migrateWarnProp( ret, "cacheable", false, warning );
+	}
+
+	return ret;
+};
 
 var eventAdd = jQuery.event.add,
 	eventRemove = jQuery.event.remove,
@@ -351,6 +384,9 @@ var eventAdd = jQuery.event.add,
 if ( jQuery.event.props && jQuery.event.props[ 0 ] !== "attrChange" ) {
 	jQuery.event.props.unshift( "attrChange", "attrName", "relatedNode", "srcElement" );
 }
+
+// Undocumented jQuery.event.handle was "deprecated" in jQuery 1.7
+migrateWarnProp( jQuery.event, "handle", jQuery.event.dispatch, "jQuery.event.handle is undocumented and deprecated" );
 
 // Support for 'hover' pseudo-event and ajax event warnings
 jQuery.event.add = function( elem, types, handler, data, selector ){
