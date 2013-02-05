@@ -1,0 +1,21 @@
+{
+	"name": "jquery",
+	"title": "jQuery",
+	"description": "JavaScript library for DOM operations",
+	"version": "1.9.1",
+	"homepage": "http://jquery.com",
+	"author": {
+		"name": "jQuery Foundation and other contributors",
+		"url": "https://github.com/jquery/jquery/blob/master/AUTHORS.txt"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jquery/jquery.git"
+	},
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt"
+		}
+	]
+}
