@@ -3,7 +3,8 @@ jQuery Bundle for Symfony2
 
 ## Current Version
 
-jQuery 1.8.3
+jQuery 1.10.1
+jQuery Migrate Plugin 1.2.1
 
 ## Installation
 
