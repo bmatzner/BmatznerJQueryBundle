@@ -10,13 +10,17 @@ jQuery Migrate Plugin 1.2.1
 
 ### Add bundle to your composer.json file
 
+Set the version of the bundle to the corresponding jQuery version.
+For IE6/7/8 support, use the master branch, the 2.x branch contains
+the lighter 2.x branch.
+
 ``` js
 // composer.json
 
 {
     "require": {
 		// ...
-        "bmatzner/jquery-bundle": "*"
+        "bmatzner/jquery-bundle": "~1.9"
     }
 }
 ```
