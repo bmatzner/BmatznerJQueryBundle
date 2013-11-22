@@ -3,12 +3,15 @@ jQuery Bundle for Symfony2
 
 ## Current Version
 
-jQuery 1.10.2
+jQuery 2.0.3
 jQuery Migrate Plugin 1.2.1
 
 ## Installation
 
 ### Add bundle to your composer.json file
+
+Set the version of the bundle to the corresponding jQuery version.
+For IE6/7/8 support, use the 1.x branch
 
 ``` js
 // composer.json
@@ -16,7 +19,7 @@ jQuery Migrate Plugin 1.2.1
 {
     "require": {
 		// ...
-        "bmatzner/jquery-bundle": "*"
+        "bmatzner/jquery-bundle": "~2.0"
     }
 }
 ```
