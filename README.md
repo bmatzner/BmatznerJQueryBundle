@@ -3,7 +3,7 @@ jQuery Bundle for Symfony2
 
 ## Current Version
 
-jQuery 1.11.0
+jQuery 1.12.2
 jQuery Migrate Plugin 1.2.1
 
 ## Installation
@@ -20,7 +20,7 @@ the lighter 2.x branch.
 {
     "require": {
 		// ...
-        "bmatzner/jquery-bundle": "~1.9"
+        "bmatzner/jquery-bundle": "~1.12"
     }
 }
 ```
